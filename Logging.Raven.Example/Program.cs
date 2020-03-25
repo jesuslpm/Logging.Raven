@@ -45,9 +45,5 @@ namespace Logging.Raven.Example
                 {
                     webBuilder.UseStartup<Startup>();
                 });
-
-
-        
-
     }
 }
