@@ -1,5 +1,5 @@
 # Logging.Raven
-RavenDB structured logging provider for .net core 3.1
+RavenDB structured logging provider for .net core 3.1. Store your logs in a RavenDB database and query them easily.
 
 To add Raven logging provider to your asp.net core application you need to add it to your program.cs. For example:
 ```
