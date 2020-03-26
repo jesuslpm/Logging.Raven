@@ -4,6 +4,7 @@
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,7 +42,22 @@ namespace Logging.Raven
         {
             if (obj is IEnumerable<KeyValuePair<string, object>> properties)
             {
-                return properties.ToDictionary(x => x.Key, x => x.Value);
+                return properties.ToDictionary(x => x.Key,  x =>
+                {
+                    if (x.Value == null) return null;
+                    if (x.Value is System.Reflection.MethodInfo)
+                    {
+                        return x.Value.ToString();
+                    }
+                    try
+                    {
+                        return (object) JToken.FromObject(x.Value);
+                    }
+                    catch
+                    {
+                        return (object) x.Value?.ToString();
+                    }
+                });
             }
             else
             {

@@ -1,0 +1,1 @@
+pwsh -ExecutionPolicy Bypass -File .\run-linux.ps1 -NoSetup -Unsecured

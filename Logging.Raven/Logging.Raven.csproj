@@ -3,6 +3,19 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Version>0.1.1-Beta</Version>
+    <Authors>Jesús López</Authors>
+    <Company>i-nercya</Company>
+    <PackageId>Logging.RavenDB</PackageId>
+    <Description>RavenDB structured logging provider for .net core 3.1. Store your logs in a RavenDB database and query them easily.</Description>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/jesuslpm/Logging.Raven</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jesuslpm/Logging.Raven</RepositoryUrl>
+    <PackageTags>Logging RavenDB</PackageTags>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <Product>Logging.RavenDB</Product>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +25,13 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.2" />
     <PackageReference Include="RavenDB.Client" Version="4.2.101" />
     <PackageReference Include="RT.Comb" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -65,12 +65,13 @@ namespace Logging.Raven
             }
         }
 
-        private static TimeSpan interval = TimeSpan.FromSeconds(20);
-        private static int timout = 4000;
+       
+        
 
 
         private void TryDispose(ref BulkInsertOperation bulkInsert)
         {
+            if (bulkInsert == null) return;
             try
             {
                 bulkInsert.Dispose();
@@ -84,30 +85,26 @@ namespace Logging.Raven
 
         private void BulkInsertFromQueue()
         {
+            const int timout = 5000;
             bool shouldStop = false;
-            var watch = new Stopwatch();
             BulkInsertOperation bulkInsert = null;
 
-            while (true)
+            while (logEntryQueue.IsCompleted == false)
             {
                 RavenLogEntry logEntry = null;
                 try
                 {
                     var taken = logEntryQueue.TryTake(out logEntry, timout);
-                    if (bulkInsert != null && watch.Elapsed > interval)
-                    {
-                        TryDispose(ref bulkInsert);
-                    }
                     if (taken)
                     {
                         if (bulkInsert == null)
                         {
                             bulkInsert = store.BulkInsert(this.Database);
-                            watch.Restart();
                         }
                     }
                     else
                     {
+                        TryDispose(ref bulkInsert);
                         continue;
                     }
                 }
