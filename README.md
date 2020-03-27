@@ -4,7 +4,7 @@ RavenDB structured logging provider for .net core 3.1. Store your logs in a Rave
 Nuget Package Available: [Logging.RavenDB](https://www.nuget.org/packages/Logging.RavenDB)
 
 To add Raven logging provider to your asp.net core application you need to add it to your program.cs. For example:
-```
+```csharp
 public class Program
 {
     public static void Main(string[] args)
@@ -38,7 +38,7 @@ public class Program
 ```
 
 You can configure it like any other standard provider in appsettings.json. For example:
-```
+```json
 {
   "Logging": {
     "LogLevel": {
@@ -63,11 +63,11 @@ Accoding to the above appsetings file, Raven log entries will be stored in test 
 
 
 A structured log like the following:
-```
+```csharp
 logger.LogInformation("Weather forecast called using {Service}", "International Weather Forecast Service");
 ```
 Produces a RavenDB document like the following. Please notice `State` with `Service` and `{OriginalFormat}` along with the traditional `Text` message. It also inludes a lot of information about the log, such as `Level`, `TimeStamp`, `Category` and so on. `Scopes` is also interesting, it provides you information about the http request, the activity and action.
-```
+```json
 {
     "Category": "Logging.Raven.Example.Controllers.WeatherForecastController",
     "Level": "Information",
@@ -108,7 +108,7 @@ Produces a RavenDB document like the following. Please notice `State` with `Serv
 ```
 
 Information about errors is also included when logging exceptions like this:
-```
+```csharp
 try
 {
     throw new InvalidOperationException("Invalid operation");
@@ -119,7 +119,7 @@ catch (Exception ex)
 }
 ```
 In this case you get a document like the following:
-```
+```json
 {
     "Category": "Logging.Raven.Example.Controllers.WeatherForecastController",
     "Level": "Error",
