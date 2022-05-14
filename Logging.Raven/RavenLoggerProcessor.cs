@@ -107,7 +107,7 @@ namespace Logging.Raven
 
         private void BulkInsertFromQueue()
         {
-            const int timout = 5000;
+            const int timeout = 3000;
             bool shouldStop = false;
             BulkInsertOperation bulkInsert = null;
 
@@ -117,7 +117,7 @@ namespace Logging.Raven
                 bool taken = false;
                 try
                 {
-                    taken = logEntryQueue.TryTake(out logEntry, timout);
+                    taken = logEntryQueue.TryTake(out logEntry, timeout);
                 }
                 catch (Exception)
                 {
