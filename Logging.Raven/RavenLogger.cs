@@ -16,14 +16,14 @@ namespace Logging.Raven
 {
     internal class RavenLogger : ILogger
     {
-        private readonly RavenLoggerProcessor loggerProcessor;
+        private readonly RavenLoggerWriter loggerProcessor;
         private readonly IHttpContextAccessor httpContextAccessor;
         public string Category { get; private set; }
 
         internal IExternalScopeProvider ScopeProvider { get; set; }
         internal RavenLoggerOptions Options { get; set; }
 
-        public RavenLogger(string category, RavenLoggerProcessor loggerProcessor, IHttpContextAccessor httpContextAccessor)
+        public RavenLogger(string category, RavenLoggerWriter loggerProcessor, IHttpContextAccessor httpContextAccessor)
         {
             this.loggerProcessor = loggerProcessor;
             this.Category = category;

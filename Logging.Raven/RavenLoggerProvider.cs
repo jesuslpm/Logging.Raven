@@ -22,7 +22,7 @@ namespace Logging.Raven
     {
         ConcurrentDictionary<string, RavenLogger> loggers;
         IExternalScopeProvider scopeProvider;
-        private readonly RavenLoggerProcessor loggerProcessor;
+        private readonly RavenLoggerWriter loggerProcessor;
         private readonly IDocumentStore store;
         private IDisposable optionsReloadToken;
         private readonly IHttpContextAccessor httpContextAccessor;
@@ -40,7 +40,7 @@ namespace Logging.Raven
             this.scopeProvider = NullExternalScopeProvider.Instance;
             this.loggers = new ConcurrentDictionary<string, RavenLogger>();
             this.store = store;
-            this.loggerProcessor = new RavenLoggerProcessor(store);
+            this.loggerProcessor = new RavenLoggerWriter(store);
             this.optionsMonitor = optionsMonitor;
             SetOptions(optionsMonitor.CurrentValue);
             optionsReloadToken = optionsMonitor.OnChange(SetOptions);
