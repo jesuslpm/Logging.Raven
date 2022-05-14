@@ -4,6 +4,7 @@
 
 using Raven.Client.Documents;
 using Raven.Client.Documents.BulkInsert;
+using Raven.Client.Exceptions.Database;
 using Raven.Client.Json;
 using System;
 using System.Collections.Concurrent;
@@ -16,14 +17,14 @@ namespace Logging.Raven
 {
     internal sealed class RavenLoggerProcessor : IDisposable
     {
-        private const int _maxQueueLength = 8192;
+        private const int MaxAllowedQueueLength = 8192;
 
         private readonly IDocumentStore store;
         internal RavenLoggerOptions Options { get; set; }
         private string Database => Options.Database;
         private TimeSpan Expiration => Options.Expiration;
 
-        private readonly BlockingCollection<RavenLogEntry> logEntryQueue = new BlockingCollection<RavenLogEntry>(_maxQueueLength);
+        private readonly BlockingCollection<RavenLogEntry> logEntryQueue = new BlockingCollection<RavenLogEntry>(MaxAllowedQueueLength);
 
         private readonly Thread bulkInsertWorkerThread;
 
@@ -40,6 +41,7 @@ namespace Logging.Raven
 
         public RavenLoggerProcessor(IDocumentStore store)
         {
+            if (store == null) throw new ArgumentNullException(nameof(store));
             this.store = store;
             this.bulkInsertWorkerThread = new Thread(BulkInsertFromQueue)
             {
@@ -65,10 +67,6 @@ namespace Logging.Raven
             }
         }
 
-       
-        
-
-
         private void TryDispose(ref BulkInsertOperation bulkInsert)
         {
             if (bulkInsert == null) return;
@@ -83,6 +81,30 @@ namespace Logging.Raven
             bulkInsert = null;
         }
 
+        private static TimeSpan tenSeconds = TimeSpan.FromSeconds(10);
+
+        private BulkInsertOperation CreateBulkInsertOperation()
+        {
+            var startTime = DateTime.UtcNow;
+            while (true)
+            {
+                try
+                {
+                    return this.store.BulkInsert(this.Database);
+                }
+                catch 
+                {
+                    if (logEntryQueue.IsCompleted) throw;
+                    if (DateTime.UtcNow.Subtract(startTime) > tenSeconds)
+                    {
+                        try { logEntryQueue.CompleteAdding(); } catch { };
+                        throw;
+                    }
+                    Thread.Sleep(200);
+                }
+            }
+        }
+
         private void BulkInsertFromQueue()
         {
             const int timout = 5000;
@@ -92,30 +114,34 @@ namespace Logging.Raven
             while (logEntryQueue.IsCompleted == false)
             {
                 RavenLogEntry logEntry = null;
+                bool taken = false;
                 try
                 {
-                    var taken = logEntryQueue.TryTake(out logEntry, timout);
-                    if (taken)
+                    taken = logEntryQueue.TryTake(out logEntry, timout);
+                }
+                catch (Exception)
+                {
+                    shouldStop = true;
+                }
+                if (taken)
+                {
+                    if (bulkInsert == null)
                     {
-                        if (bulkInsert == null)
+                        try
                         {
-                            bulkInsert = store.BulkInsert(this.Database);
+                            bulkInsert = CreateBulkInsertOperation();
+                        }
+                        catch (Exception ex)
+                        {
+                            shouldStop = true;
+                            Console.Error.WriteLine("Failed to create bulk insert operation\n" + ex.ToString());
                         }
                     }
-                    else
-                    {
-                        TryDispose(ref bulkInsert);
-                        continue;
-                    }
                 }
-                catch (InvalidOperationException)
+                else
                 {
-                    shouldStop = true;
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine("Failed to take log entry from queue \n" + ex.ToString());
-                    shouldStop = true;
+                    TryDispose(ref bulkInsert);
+                    continue;
                 }
                 if (shouldStop)
                 {
@@ -129,6 +155,12 @@ namespace Logging.Raven
                         [global::Raven.Client.Constants.Documents.Metadata.Expires] = DateTime.UtcNow.Add(this.Expiration)
                     };
                     bulkInsert.Store(logEntry, logEntry.Id, new MetadataAsDictionary(metadata));
+                }
+                catch (DatabaseDoesNotExistException ex)
+                {
+                    Console.Error.WriteLine("Failed to store log entry into bulk insert operation\n" + ex.ToString());
+                    try { logEntryQueue.CompleteAdding(); } catch { }
+                    return;
                 }
                 catch (Exception ex)
                 {

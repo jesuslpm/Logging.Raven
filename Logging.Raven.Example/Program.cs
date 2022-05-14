@@ -18,7 +18,7 @@ namespace Logging.Raven.Example
             CreateHostBuilder(args).Build().Run();
         }
 
-        static IDocumentStore CreateDocumentStore(IServiceProvider serviceProvider)
+        public static IDocumentStore CreateDocumentStore(IServiceProvider serviceProvider)
         {
             var store = new DocumentStore
             {
@@ -33,7 +33,7 @@ namespace Logging.Raven.Example
             Host.CreateDefaultBuilder(args)
                 .ConfigureLogging(logging =>
                 {
-                    logging.Services.AddSingleton(CreateDocumentStore);
+                    //logging.Services.AddSingleton(CreateDocumentStore);
                     //logging.AddRaven(options =>
                     //{
                     //    options.Database = "test";

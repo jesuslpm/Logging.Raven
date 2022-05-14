@@ -35,6 +35,8 @@ namespace Logging.Raven.Example.Controllers
             {
                 this._logger.LogError(ex, "Something went wrong");
             }
+
+            this._logger.LogInformation(new EventId(50, "MyEvent"), "Structured logging with object parameter: {Parameter}", new { Id = 1, Name = "Jesús" });
            
             var rng = new Random();
             

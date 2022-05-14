@@ -3,11 +3,13 @@
 
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Logging.Raven
@@ -42,30 +44,40 @@ namespace Logging.Raven
         {
             if (obj is IEnumerable<KeyValuePair<string, object>> properties)
             {
-                return properties.ToDictionary(x => x.Key,  x =>
+                var result = new Dictionary<string, object>();
+                foreach (var kv in properties)
                 {
-                    if (x.Value == null) return null;
-                    if (x.Value is System.Reflection.MethodInfo)
+                    //if (kv.Key == "ModelBinderProviders")
+                    //{
+                    //}
+                    var originalValue = kv.Value;
+                    object value = null;
+                    if (originalValue != null)
                     {
-                        return x.Value.ToString();
+                        if (originalValue is MethodInfo || originalValue is RouteEndpoint)
+                        {
+                            value = originalValue.ToString();
+                        }
+                        else
+                        {
+                            try
+                            {
+                                value = JToken.FromObject(originalValue);
+                            }
+                            catch
+                            {
+                                value = originalValue.ToString();
+                            }
+                        }
                     }
-                    try
-                    {
-                        return (object) JToken.FromObject(x.Value);
-                    }
-                    catch
-                    {
-                        return (object) x.Value?.ToString();
-                    }
-                });
+                    result.Add(kv.Key, value);
+                }
+                return result;
             }
-            else
+            return new Dictionary<string, object>
             {
-                return new Dictionary<string, object>
-                {
-                    ["Value"] = obj
-                };
-            }
+                ["Value"] = obj
+            };
         }
 
         public void Log<TState>(LogLevel logLevel, EventId eventId,
