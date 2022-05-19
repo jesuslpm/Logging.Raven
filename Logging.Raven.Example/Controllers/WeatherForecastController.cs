@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,8 @@ namespace Logging.Raven.Example.Controllers
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
     {
+        static int id = 0;
+
         private static readonly string[] Summaries = new[]
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -26,18 +29,21 @@ namespace Logging.Raven.Example.Controllers
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {
-            this._logger.LogInformation("Weather forecast called using {Service}", "International Weather Forecast Service");
-            try
+            //this._logger.LogInformation("Weather forecast called using {Service}", "International Weather Forecast Service");
+            //try
+            //{
+            //    throw new InvalidOperationException("Invalid operation");
+            //}
+            //catch (Exception ex)
+            //{
+            //    this._logger.LogError(ex, "Something went wrong");
+            //}
+            for (var i = 0; i < 65536; i++)
             {
-                throw new InvalidOperationException("Invalid operation");
-            }
-            catch (Exception ex)
-            {
-                this._logger.LogError(ex, "Something went wrong");
+                Interlocked.Increment(ref id);
+                this._logger.LogInformation(new EventId(50, "MyEvent"), "{Id} Structured logging with object parameter: {Parameter}", id, new { Id = id, Name = "Jesús" });
             }
 
-            this._logger.LogInformation(new EventId(50, "MyEvent"), "Structured logging with object parameter: {Parameter}", new { Id = 1, Name = "Jesús" });
-           
             var rng = new Random();
             
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
