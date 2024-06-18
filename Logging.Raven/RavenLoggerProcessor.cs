@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 
+using Microsoft.Extensions.Logging;
 using Raven.Client.Documents;
 using Raven.Client.Documents.BulkInsert;
 using Raven.Client.Exceptions.Database;
@@ -55,9 +56,24 @@ namespace Logging.Raven
         {
             if (!logEntryQueue.IsAddingCompleted)
             {
+                int timeout = 0;
+                switch (logEntry.Level)
+                {
+                    case LogLevel.Debug:
+                    case LogLevel.Information:
+                        timeout = 2;
+                        break;
+                    case LogLevel.Warning:
+                        timeout = 4;
+                        break;
+                    case LogLevel.Error:
+                    case LogLevel.Critical:
+                        timeout = 16;
+                        break;
+                }
                 try
                 {
-                    logEntryQueue.Add(logEntry);
+                    logEntryQueue.TryAdd(logEntry, timeout);
                 }
                 catch (InvalidOperationException) { }
                 catch (Exception ex)
@@ -107,43 +123,6 @@ namespace Logging.Raven
                 }
             }
         }
-
-        private void RewriteBatch(List<RavenLogEntry> batch)
-        {
-            var startTime = DateTime.UtcNow;
-            BulkInsertOperation bulkInsert = null;
-            try
-            {
-                while (true)
-                {
-                    bulkInsert = CreateBulkInsertOperation();
-                    try
-                    {
-                        foreach (var entry in batch)
-                        {
-                            StoreLogEntry(bulkInsert, entry);
-                        }
-                        bulkInsert.Dispose();
-                        bulkInsert = null;
-                        return;
-                    }
-                    catch
-                    {
-                        TryDispose(ref bulkInsert);
-                        if (logEntryQueue.IsCompleted) throw;
-                        if (DateTime.UtcNow.Subtract(startTime) > tenSeconds) throw;
-                        Thread.Sleep(200);
-                    }
-                }
-            }
-            finally
-            {
-                TryDispose(ref bulkInsert);
-                batch.Clear();
-            }
-        }
-
-
         private void TryCompleteAdding()
         {
             try 
@@ -155,11 +134,8 @@ namespace Logging.Raven
         private void BulkInsertFromQueue()
         {
             const int timeout = 100_000;
-            const int batchSize = 2048;
             bool shouldStop = false;
             BulkInsertOperation bulkInsert = null;
-            var batch = new List<RavenLogEntry>(batchSize);
-
             int count = 0;
 
             while (logEntryQueue.IsCompleted == false)
@@ -192,25 +168,21 @@ namespace Logging.Raven
                 else
                 {
                     TryDispose(ref bulkInsert);
-                    batch.Clear();
                     continue;
                 }
                 if (shouldStop)
                 {
                     TryDispose(ref bulkInsert);
                     TryCompleteAdding();
-                    batch.Clear();
                     return;
                 }
                 try
                 {
-                    // batch.Add(logEntry);
                     StoreLogEntry(bulkInsert, logEntry);
-                    if (batch.Count >= batchSize || ++count >= 65536)
+                    if (++count >= 65536)
                     {
                         bulkInsert.Dispose();
                         bulkInsert = null;
-                        batch.Clear();
                         count = 0;
                     }
                 }
@@ -219,20 +191,11 @@ namespace Logging.Raven
                     Console.Error.WriteLine("Failed to store log entry into bulk insert operation\n" + ex.ToString());
                     TryDispose(ref bulkInsert);
                     try { if (!logEntryQueue.IsAddingCompleted) logEntryQueue.CompleteAdding(); } catch { }
-                    batch.Clear();
                     return;
                 }
                 catch
                 {
                     TryDispose(ref bulkInsert);
-                    try
-                    {
-                        RewriteBatch(batch);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine("Failed to store log entries into bulk insert operation\n" + ex.ToString());
-                    }
                 }
             }
         }

@@ -3,12 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Jesús López</Authors>
     <Company>i-nercya</Company>
     <PackageId>Logging.RavenDB</PackageId>
-    <Description>RavenDB structured logging provider for .net core 3.1. Store your logs in a RavenDB database and query them easily.</Description>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <Description>RavenDB structured logging provider for .net. Store your logs in a RavenDB database and query them easily.</Description>
     <PackageProjectUrl>https://github.com/jesuslpm/Logging.Raven</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jesuslpm/Logging.Raven</RepositoryUrl>
     <PackageTags>Logging RavenDB</PackageTags>
@@ -16,6 +15,11 @@
     <Product>Logging.RavenDB</Product>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Title>RavenDB Logging Provider for NET</Title>
+    <Copyright>Copyright 2024</Copyright>
+	<EmbedAllSources>true</EmbedAllSources>
+	<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,6 +36,13 @@
     <None Include="..\LICENSE.txt">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 
