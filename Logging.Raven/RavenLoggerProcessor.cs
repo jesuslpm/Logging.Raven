@@ -54,32 +54,32 @@ namespace Logging.Raven
 
         public void EnqueueLogEntry(RavenLogEntry logEntry)
         {
-            if (!logEntryQueue.IsAddingCompleted)
+            try
             {
-                int timeout = 0;
-                switch (logEntry.Level)
+                if (!logEntryQueue.IsAddingCompleted)
                 {
-                    case LogLevel.Debug:
-                    case LogLevel.Information:
-                        timeout = 2;
-                        break;
-                    case LogLevel.Warning:
-                        timeout = 4;
-                        break;
-                    case LogLevel.Error:
-                    case LogLevel.Critical:
-                        timeout = 16;
-                        break;
-                }
-                try
-                {
+                    int timeout = 0;
+                    switch (logEntry.Level)
+                    {
+                        case LogLevel.Debug:
+                        case LogLevel.Information:
+                            timeout = 2;
+                            break;
+                        case LogLevel.Warning:
+                            timeout = 4;
+                            break;
+                        case LogLevel.Error:
+                        case LogLevel.Critical:
+                            timeout = 16;
+                            break;
+                    }
                     logEntryQueue.TryAdd(logEntry, timeout);
                 }
-                catch (InvalidOperationException) { }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine("Failed to enqueue log entry. \n" + ex.ToString());
-                }
+            }
+            catch (InvalidOperationException) { }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine("Failed to enqueue log entry. \n" + ex.ToString());
             }
         }
 
